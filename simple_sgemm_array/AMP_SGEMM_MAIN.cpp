@@ -1,6 +1,7 @@
 #pragma warning (disable : 4996)
 #include <string>
 #include <iostream>
+#include <chrono>
 #include <amp.h>
 #include "dummy_sgemm.h"
 #include "init_random.h"

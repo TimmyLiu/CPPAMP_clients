@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <amp.h>
+#include <chrono>
 #include "dummy_sgemm.h"
 #include "init_random.h"
 #include "cppAMP_sgemm.h"
@@ -101,7 +102,22 @@ int main(int argc, char** argv)
     {
         //warm up
         parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+        std::cout << "the current system clock has a resolution of " << ((double)std::chrono::high_resolution_clock::period::num / (double)std::chrono::high_resolution_clock::period::den) << " seconds." << std::endl;
+        int iterations = 100;
 
+        std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+
+        for (int i = 0; i < iterations; i++)
+        {
+            parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+        }
+
+        std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+
+        auto diff = end - start;
+        long long flops = ((long long)2 * (long long)M * (long long)N * (long long)K * (long long)iterations) / diff.count();
+        std::cout << "time: " << diff.count() << " nanoseconds." << std::endl;
+        std::cout << "performance: " << flops << " GFLOPS" << std::endl;
 
     }
 }
