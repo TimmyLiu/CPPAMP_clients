@@ -84,7 +84,8 @@ int main(int argc, char** argv)
 
     if (performance_level == 0)
     {
-        parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+        //parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+        parallel_for_each_simple_sgemm_tn_2x2(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
         //concurrency::copy(gpuC, c + offC);
         bool pass = error_checking_rowMajor(cpuC, gpuC, M, N, ldc);
 
@@ -109,7 +110,8 @@ int main(int argc, char** argv)
 
         for (int i = 0; i < iterations; i++)
         {
-            parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+            //parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+            parallel_for_each_simple_sgemm_tn_2x2(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
         }
 
         std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
