@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 	std::cout << "create accelerator_view. " << std::endl;
 	concurrency::accelerator acc = accelerator(accelerator::default_accelerator);
 	std::cout << "created accelerator. " << std::endl;
-	concurrency::accelerator_view acc_v = acc.default_view;
+	concurrency::accelerator_view acc_v = acc.get_default_view();
 	std::cout << "created accelerator_view. " << std::endl;
 
 	concurrency::extent<2> eA(lda, K);
@@ -91,17 +91,18 @@ int main(int argc, char** argv)
     
 	std::cout << "copy GPU data. " << std::endl;
     //copy the data to gpu
-    //concurrency::copy(a + offA, a + lda * K + offA, gpuA);
-    //concurrency::copy(b + offB, b + ldb * K + offB, gpuB);
-    //concurrency::copy(c + offC, c + ldc * M + offC, gpuC);
+    concurrency::copy(a + offA, a + lda * K + offA, gpuA);
+    concurrency::copy(b + offB, b + ldb * K + offB, gpuB);
+    concurrency::copy(c + offC, c + ldc * M + offC, gpuC);
     
 	std::cout << "about to lauch kernel. " << std::endl;
 
     if (performance_level == 0)
     {
         //parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+		extent<2> compute_domain(M, N);
         concurrency::parallel_for_each(
-            gpuC.extent,
+            compute_domain,
             [=, &gpuA, &gpuB, &gpuC](concurrency::index<2> idx) restrict(amp)
         {
             int idx0 = idx[0];
@@ -122,7 +123,7 @@ int main(int argc, char** argv)
         );
 
 		std::cout << "lauched kernel. " << std::endl;
-		gpuC.accelerator_view.wait();
+		gpuC.get_accelerator_view().wait();
 
         concurrency::copy(gpuC, c + offC);
         bool pass = error_checking_rowMajor(cpuC, gpuC, M, N, ldc);

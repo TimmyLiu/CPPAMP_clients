@@ -30,8 +30,10 @@ void parallel_for_each_simple_sgemm_tn(array<float, 2> c, array<float, 2> a, arr
     );
     c.synchronize();
     */
+
+	extent<2> compute_domain(M, N);
     concurrency::parallel_for_each(
-        c.extent,
+		compute_domain,
         [=,&a,&b,&c](concurrency::index<2> idx) restrict(amp)
     {
         int idx0 = idx[0];
