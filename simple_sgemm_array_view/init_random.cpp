@@ -16,8 +16,8 @@ int init_random_matrix_rowMajor(T *Matrix, int offset, int rowSize, int columnSi
         {
         float randNumRange = static_cast<T> (rand());
         float randNum = static_cast<T>(rand() / static_cast<T>(RAND_MAX) * randNumRange);
-        Matrix[rowidx*leadingDimSize + colidx + offset] = randNum;
-        //Matrix[rowidx*leadingDimSize + colidx + offset] = 1;
+        //Matrix[rowidx*leadingDimSize + colidx + offset] = randNum;
+        Matrix[rowidx*leadingDimSize + colidx + offset] = 1;
         }
     }
 

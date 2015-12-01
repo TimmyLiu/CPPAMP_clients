@@ -52,10 +52,10 @@ int main(int argc, char** argv)
     c = (float*)malloc((ldc * M + offC) * sizeof(float));
     cpuC = (float*)malloc((ldc * M + offC) * sizeof(float));
 
-    init_random_matrix_rowMajor(a, offA, M, K, lda);
+    init_random_matrix_rowMajor(a, offA, K, M, lda);
     init_random_matrix_rowMajor(b, offB, K, N, ldb);
     init_random_matrix_rowMajor(c, offC, M, N, ldc);
-    memcpy(cpuC, c, sizeof(float)*(ldc * N + offC));
+    memcpy(cpuC, c, sizeof(float)*(ldc * M + offC));
 
     if (performance_level == 0)
     {
@@ -74,16 +74,28 @@ int main(int argc, char** argv)
         
     }
 
-    concurrency::array<float, 2> gpuA(lda, K);//(lda, K, a + offA);
-    concurrency::array<float, 2> gpuB(ldb, N);//(ldb, N, b + offB);
-    concurrency::array<float, 2> gpuC(ldc, N);//(ldc, N, c + offC);
-    
-    //copy the data to gpu
-    concurrency::copy(a + offA, gpuA);
-    concurrency::copy(b + offB, gpuB);
-    concurrency::copy(c + offC, gpuC);
-    
+	std::cout << "create accelerator_view. " << std::endl;
+	concurrency::accelerator acc = accelerator(accelerator::default_accelerator);
+	std::cout << "created accelerator. " << std::endl;
+	concurrency::accelerator_view acc_v = acc.default_view;
+	std::cout << "created accelerator_view. " << std::endl;
 
+	concurrency::extent<2> eA(lda, K);
+	concurrency::extent<2> eB(ldb, K);
+	concurrency::extent<2> eC(ldc, M);
+
+	std::cout << "create GPU data. " << std::endl;
+    concurrency::array<float, 2> gpuA(eA, acc_v);//(lda, K, a + offA);
+    concurrency::array<float, 2> gpuB(eB, acc_v);//(ldb, N, b + offB);
+    concurrency::array<float, 2> gpuC(eC, acc_v);//(ldc, N, c + offC);
+    
+	std::cout << "copy GPU data. " << std::endl;
+    //copy the data to gpu
+    //concurrency::copy(a + offA, a + lda * K + offA, gpuA);
+    //concurrency::copy(b + offB, b + ldb * K + offB, gpuB);
+    //concurrency::copy(c + offC, c + ldc * M + offC, gpuC);
+    
+	std::cout << "about to lauch kernel. " << std::endl;
 
     if (performance_level == 0)
     {
@@ -95,11 +107,10 @@ int main(int argc, char** argv)
             int idx0 = idx[0];
             int idx1 = idx[1];
 
-            //gpuC[idx0][idx1] *= beta;
             float localSum = beta * gpuC[idx0][idx1];
-            for (int k = 0; k < K; k++)
+            for (int k = 0; k < 4; k++)
             {
-                localSum += alpha * gpuA[k][idx0] * gpuB[k][idx1];
+				localSum += alpha * gpuA[k][idx0] * gpuB[k][idx1];
             }
             //localSum += alpha * gpuA[0][idx0] * gpuB[0][idx1];
             //localSum += alpha * gpuA[1][idx0] * gpuB[1][idx1];
@@ -109,6 +120,9 @@ int main(int argc, char** argv)
             gpuC[idx0][idx1] = localSum;
         }
         );
+
+		std::cout << "lauched kernel. " << std::endl;
+		gpuC.accelerator_view.wait();
 
         concurrency::copy(gpuC, c + offC);
         bool pass = error_checking_rowMajor(cpuC, gpuC, M, N, ldc);

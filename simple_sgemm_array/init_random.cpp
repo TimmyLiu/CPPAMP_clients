@@ -1,6 +1,8 @@
 #pragma once
 #include "init_random.h"
 
+template int init_random_matrix_rowMajor<float>(float *Matrix, int offset, int rowSize, int columnSize, int leadingDimSize);
+
 template<typename T>
 int init_random_matrix_rowMajor(T *Matrix, int offset, int rowSize, int columnSize, int leadingDimSize)
 {
@@ -16,11 +18,9 @@ int init_random_matrix_rowMajor(T *Matrix, int offset, int rowSize, int columnSi
         {
         float randNumRange = static_cast<T> (rand());
         float randNum = static_cast<T>(rand() / static_cast<T>(RAND_MAX) * randNumRange);
-        Matrix[rowidx*leadingDimSize + colidx + offset] = randNum;
-        //Matrix[rowidx*leadingDimSize + colidx + offset] = 1;
+        //Matrix[rowidx*leadingDimSize + colidx + offset] = randNum;
+        Matrix[rowidx*leadingDimSize + colidx + offset] = 1;
         }
     }
 
 }
-
-template int init_random_matrix_rowMajor<float>(float *Matrix, int offset, int rowSize, int columnSize, int leadingDimSize);
