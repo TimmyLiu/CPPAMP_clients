@@ -109,7 +109,7 @@ int main(int argc, char** argv)
             int idx1 = idx[1];
 
             float localSum = beta * gpuC[idx0][idx1];
-            for (int k = 0; k < 4; k++)
+            for (int k = 0; k < K; k++)
             {
 				localSum += alpha * gpuA[k][idx0] * gpuB[k][idx1];
             }
