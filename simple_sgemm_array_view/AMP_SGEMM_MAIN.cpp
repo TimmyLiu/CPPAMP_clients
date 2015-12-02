@@ -71,9 +71,9 @@ int main(int argc, char** argv)
         }
     }
 
-    concurrency::array_view<const float, 2> gpuA(lda, K, a + offA);//(lda, K, a + offA);
-    concurrency::array_view<const float, 2> gpuB(ldb, K, b + offB);//(ldb, N, b + offB);
-    concurrency::array_view<float, 2> gpuC(ldc, M, c + offC);//(ldc, N, c + offC);
+    concurrency::array_view<const float, 2> gpuA(K, lda, a + offA);//(lda, K, a + offA);
+    concurrency::array_view<const float, 2> gpuB(K, ldb, b + offB);//(ldb, N, b + offB);
+    concurrency::array_view<float, 2> gpuC(M, ldc, c + offC);//(ldc, N, c + offC);
     
     //copy the data to gpu
     //concurrency::copy(a + offA, gpuA);
