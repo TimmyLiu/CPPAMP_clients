@@ -80,9 +80,9 @@ int main(int argc, char** argv)
 	concurrency::accelerator_view acc_v = acc.get_default_view();
 	std::cout << "created accelerator_view. " << std::endl;
 
-	concurrency::extent<2> eA(lda, K);
-	concurrency::extent<2> eB(ldb, K);
-	concurrency::extent<2> eC(ldc, M);
+	concurrency::extent<2> eA(K, lda);
+	concurrency::extent<2> eB(K, ldb);
+	concurrency::extent<2> eC(M, ldc);
 
 	std::cout << "create GPU data. " << std::endl;
     concurrency::array<float, 2> gpuA(eA, acc_v);//(lda, K, a + offA);
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
             int idx1 = idx[1];
 
             float localSum = beta * gpuC[idx0][idx1];
-            for (int k = 0; k < 4; k++)
+            for (int k = 0; k < K; k++)
             {
 				localSum += alpha * gpuA[k][idx0] * gpuB[k][idx1];
             }
