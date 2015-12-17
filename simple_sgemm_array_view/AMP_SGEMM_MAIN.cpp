@@ -3,11 +3,27 @@
 #include <iostream>
 #include <amp.h>
 #include <chrono>
+#include <dlfcn.h>
 #include "dummy_sgemm.h"
 #include "init_random.h"
 #include "cppAMP_sgemm.h"
 #include "error_checking.h"
 
+int exec(const char* cmd) {
+    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
+    if (!pipe)
+    {
+        printf("having trouble with pipe.\n");
+        return 1;
+    }
+    char buffer[128];
+    
+    while (!feof(pipe.get())) {
+        if (fgets(buffer, 128, pipe.get()) != NULL)
+        {}
+    }
+    return 0;
+}
 
 int main(int argc, char** argv)
 {
@@ -84,7 +100,25 @@ int main(int argc, char** argv)
 
     if (performance_level == 0)
     {
-        parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+        int pipestaus = exec("./build_kernel_online.sh");
+        void *handle;
+        char *error;
+        void (*parallel_for_each_simple_sgemm_tn_FT)(Concurrency::array_view<float, 2> c, Concurrency::array_view<const float, 2> a, Concurrency::array_view<const float, 2> b, int M, int N, int K, float alpha, float beta);
+        handle = dlopen ("/home/timmy/Documents/Github/CPPAMP_clients/OnlineCPPAMP/simple_sgemm_array_view/libsimple_sgemm.so", RTLD_LAZY);
+        if (!handle) {
+            fputs (dlerror(), stderr);
+            exit(1);
+        }
+        *(void**)(&parallel_for_each_simple_sgemm_tn_FT) = dlsym(handle, "parallel_for_each_simple_sgemm_tn");
+        if ((error = dlerror()) != NULL)  {
+            fputs(error, stderr);
+            exit(1);
+        }
+        printf("about to call simple sgemm\n");
+        //parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+        (void)parallel_for_each_simple_sgemm_tn_FT(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+        printf("called simple sgemm\n");
+        dlclose(handle);
         //parallel_for_each_simple_sgemm_tn_2x2(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
         //concurrency::copy(gpuC, c + offC);
         bool pass = error_checking_rowMajor(cpuC, gpuC, M, N, ldc);
@@ -102,7 +136,7 @@ int main(int argc, char** argv)
     if (performance_level == 1)
     {
         //warm up
-        parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+        //parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
         std::cout << "the current system clock has a resolution of " << ((double)std::chrono::high_resolution_clock::period::num / (double)std::chrono::high_resolution_clock::period::den) << " seconds." << std::endl;
         int iterations = 100;
 
@@ -111,7 +145,7 @@ int main(int argc, char** argv)
         for (int i = 0; i < iterations; i++)
         {
             //parallel_for_each_simple_sgemm_tn(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
-            parallel_for_each_simple_sgemm_tn_2x2(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
+            //parallel_for_each_simple_sgemm_tn_2x2(gpuC, gpuA, gpuB, M, N, K, alpha, beta);
         }
 
         std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
